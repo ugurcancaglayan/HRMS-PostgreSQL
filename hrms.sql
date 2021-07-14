@@ -3,12 +3,45 @@
 BEGIN;
 
 
+CREATE TABLE public.cities
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    city_name character varying(25) NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE public.employer_verification_by_system_personnels
+(
+    id integer NOT NULL,
+    system_personnel_id integer NOT NULL,
+    employer_id integer NOT NULL,
+    is_verified boolean NOT NULL,
+    verification_date date,
+    PRIMARY KEY (id)
+);
+
 CREATE TABLE public.employers
 (
     id integer NOT NULL,
     company_name character varying(50) NOT NULL,
     web_site character varying(50) NOT NULL,
     phone_number character varying(13) NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE public.job_advertisements
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    employer_id integer NOT NULL,
+    job_position_id integer NOT NULL,
+    description text NOT NULL,
+    city_id integer NOT NULL,
+    min_salary double precision NOT NULL,
+    max_salary double precision NOT NULL,
+    quota integer NOT NULL,
+    application_deadline timestamp with time zone NOT NULL,
+    is_active boolean NOT NULL,
+    created_date timestamp without time zone,
     PRIMARY KEY (id)
 );
 
@@ -24,8 +57,8 @@ CREATE TABLE public.job_seekers
     id integer NOT NULL,
     first_name character varying(20) NOT NULL,
     last_name character varying(20) NOT NULL,
-    national_idendity character varying(11) NOT NULL,
-    date_of_birth date NOT NULL,
+    national_identity bigint NOT NULL,
+    date_of_birth timestamp with time zone,
     PRIMARY KEY (id)
 );
 
@@ -45,39 +78,6 @@ CREATE TABLE public.users
     PRIMARY KEY (id)
 );
 
-CREATE TABLE public.employer_verification_by_system_personnels
-(
-    id integer NOT NULL,
-    system_personnel_id integer NOT NULL,
-    employer_id integer NOT NULL,
-    is_verified boolean NOT NULL,
-    verification_date date,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE public.cities
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    city_name character varying(25) NOT NULL,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE public.job_advertisements
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    employer_id integer NOT NULL,
-    job_position_id integer NOT NULL,
-    description text NOT NULL,
-    city_id integer NOT NULL,
-    min_salary double precision NOT NULL,
-    max_salary double precision NOT NULL,
-    quota integer NOT NULL,
-    application_deadline timestamp with time zone NOT NULL,
-    "release date" timestamp with time zone NOT NULL,
-    is_active boolean NOT NULL,
-    PRIMARY KEY (id)
-);
-
 CREATE TABLE public.verification_codes
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
@@ -87,23 +87,72 @@ CREATE TABLE public.verification_codes
     PRIMARY KEY (id)
 );
 
-ALTER TABLE public.employers
-    ADD FOREIGN KEY (id)
-    REFERENCES public.users (id)
-    NOT VALID;
+CREATE TABLE public.cv_job_experiences
+(
+    id integer NOT NULL,
+    workplace_name character varying NOT NULL,
+    job_positions_id integer NOT NULL,
+    entry_date date NOT NULL,
+    exit_date date NOT NULL,
+    is_continue boolean NOT NULL,
+    cv_id integer NOT NULL,
+    PRIMARY KEY (id)
+);
 
+CREATE TABLE public.cv_schools
+(
+    id integer NOT NULL,
+    school_name character varying(40) NOT NULL,
+    entry_date date NOT NULL,
+    graduation_date date NOT NULL,
+    is_continue boolean NOT NULL,
+    departmant character varying(20) NOT NULL,
+    cv_id integer NOT NULL,
+    PRIMARY KEY (id)
+);
 
-ALTER TABLE public.job_seekers
-    ADD FOREIGN KEY (id)
-    REFERENCES public.users (id)
-    NOT VALID;
+CREATE TABLE public.curriculum_vitaes
+(
+    id integer NOT NULL,
+    job_seeker_id integer NOT NULL,
+    github_address character varying NOT NULL,
+    linkedin_address character varying NOT NULL,
+    cover_letter text NOT NULL,
+    photo character varying NOT NULL,
+    is_active boolean NOT NULL,
+    PRIMARY KEY (id)
+);
 
+CREATE TABLE public.languages
+(
+    id integer NOT NULL,
+    language character varying NOT NULL,
+    PRIMARY KEY (id)
+);
 
-ALTER TABLE public.system_personnels
-    ADD FOREIGN KEY (id)
-    REFERENCES public.users (id)
-    NOT VALID;
+CREATE TABLE public.cv_languages
+(
+    id integer NOT NULL,
+    language_id integer NOT NULL,
+    level integer NOT NULL,
+    cv_id integer NOT NULL,
+    PRIMARY KEY (id)
+);
 
+CREATE TABLE public.computer_skills
+(
+    id integer NOT NULL,
+    skill_name character varying NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE public.cv_compuer_skills
+(
+    id integer NOT NULL,
+    computer_skill_id integer NOT NULL,
+    cv_id integer NOT NULL,
+    PRIMARY KEY (id)
+);
 
 ALTER TABLE public.employer_verification_by_system_personnels
     ADD FOREIGN KEY (system_personnel_id)
@@ -114,6 +163,18 @@ ALTER TABLE public.employer_verification_by_system_personnels
 ALTER TABLE public.employer_verification_by_system_personnels
     ADD FOREIGN KEY (employer_id)
     REFERENCES public.employers (id)
+    NOT VALID;
+
+
+ALTER TABLE public.employers
+    ADD FOREIGN KEY (id)
+    REFERENCES public.users (id)
+    NOT VALID;
+
+
+ALTER TABLE public.job_advertisements
+    ADD FOREIGN KEY (city_id)
+    REFERENCES public.cities (id)
     NOT VALID;
 
 
@@ -129,9 +190,15 @@ ALTER TABLE public.job_advertisements
     NOT VALID;
 
 
-ALTER TABLE public.job_advertisements
-    ADD FOREIGN KEY (city_id)
-    REFERENCES public.cities (id)
+ALTER TABLE public.job_seekers
+    ADD FOREIGN KEY (id)
+    REFERENCES public.users (id)
+    NOT VALID;
+
+
+ALTER TABLE public.system_personnels
+    ADD FOREIGN KEY (id)
+    REFERENCES public.users (id)
     NOT VALID;
 
 
@@ -139,7 +206,56 @@ ALTER TABLE public.verification_codes
     ADD FOREIGN KEY (user_id)
     REFERENCES public.users (id)
     NOT VALID;
+
+
+ALTER TABLE public.cv_schools
+    ADD FOREIGN KEY (cv_id)
+    REFERENCES public.curriculum_vitaes (id)
+    NOT VALID;
+
+
+ALTER TABLE public.cv_job_experiences
+    ADD FOREIGN KEY (cv_id)
+    REFERENCES public.curriculum_vitaes (id)
+    NOT VALID;
+
+
+ALTER TABLE public.cv_job_experiences
+    ADD FOREIGN KEY (job_positions_id)
+    REFERENCES public.job_positions (id)
+    NOT VALID;
+
+
+ALTER TABLE public.cv_languages
+    ADD FOREIGN KEY (language_id)
+    REFERENCES public.languages (id)
+    NOT VALID;
+
+
+ALTER TABLE public.cv_languages
+    ADD FOREIGN KEY (cv_id)
+    REFERENCES public.curriculum_vitaes (id)
+    NOT VALID;
+
+
+ALTER TABLE public.cv_compuer_skills
+    ADD FOREIGN KEY (computer_skill_id)
+    REFERENCES public.computer_skills (id)
+    NOT VALID;
+
+
+ALTER TABLE public.cv_compuer_skills
+    ADD FOREIGN KEY (cv_id)
+    REFERENCES public.curriculum_vitaes (id)
+    NOT VALID;
+
+
+ALTER TABLE public.curriculum_vitaes
+    ADD FOREIGN KEY (job_seeker_id)
+    REFERENCES public.job_seekers (id)
+    NOT VALID;
 	
+
 INSERT INTO public.cities (id, city_name) OVERRIDING SYSTEM VALUE VALUES (1, 'ADANA');
 INSERT INTO public.cities (id, city_name) OVERRIDING SYSTEM VALUE VALUES (2, 'ADIYAMAN');
 INSERT INTO public.cities (id, city_name) OVERRIDING SYSTEM VALUE VALUES (3, 'AFYONKARAHİSAR');
@@ -221,6 +337,5 @@ INSERT INTO public.cities (id, city_name) OVERRIDING SYSTEM VALUE VALUES (78, 'K
 INSERT INTO public.cities (id, city_name) OVERRIDING SYSTEM VALUE VALUES (79, 'KİLİS');
 INSERT INTO public.cities (id, city_name) OVERRIDING SYSTEM VALUE VALUES (80, 'OSMANİYE');
 INSERT INTO public.cities (id, city_name) OVERRIDING SYSTEM VALUE VALUES (81, 'DÜZCE');
-
 
 END;
